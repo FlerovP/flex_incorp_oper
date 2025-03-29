@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import '../models/registration_details.dart';
 import '../models/shareholder_details.dart';
 import 'shareholder_details_screen.dart';
+import 'package:syncfusion_flutter_xlsio/xlsio.dart' hide Row, Column, Border;
+import 'package:path_provider/path_provider.dart';
+import 'package:open_file/open_file.dart';
+import 'dart:io';
 
 class RegistrationDetailsScreen extends StatelessWidget {
   final RegistrationDetails details;
@@ -10,6 +14,197 @@ class RegistrationDetailsScreen extends StatelessWidget {
     super.key,
     required this.details,
   });
+
+  Future<void> _downloadApplicationForm(BuildContext context) async {
+    try {
+      // Создаем новую рабочую книгу
+      final Workbook workbook = Workbook();
+      final Worksheet sheet = workbook.worksheets[0];
+
+      // Устанавливаем стили
+      final Style headerStyle = workbook.styles.add('headerStyle');
+      headerStyle.fontSize = 16;
+      headerStyle.bold = true;
+      headerStyle.fontColor = '#000000';
+
+      final Style subHeaderStyle = workbook.styles.add('subHeaderStyle');
+      subHeaderStyle.fontSize = 14;
+      subHeaderStyle.bold = true;
+      subHeaderStyle.fontColor = '#000000';
+
+      final Style contentStyle = workbook.styles.add('contentStyle');
+      contentStyle.fontSize = 12;
+      contentStyle.fontColor = '#000000';
+
+      // Заголовок
+      sheet.getRangeByIndex(1, 1, 1, 2).merge();
+      sheet.getRangeByIndex(1, 1).setText('Company Registration Application');
+      sheet.getRangeByIndex(1, 1).cellStyle = headerStyle;
+
+      // Информация о компании
+      sheet.getRangeByIndex(3, 1, 3, 2).merge();
+      sheet.getRangeByIndex(3, 1).setText('Company Information');
+      sheet.getRangeByIndex(3, 1).cellStyle = subHeaderStyle;
+
+      sheet.getRangeByIndex(4, 1).setText('Company Name:');
+      sheet.getRangeByIndex(4, 2).setText(details.companyNameOptions[0]);
+      sheet.getRangeByIndex(4, 1).cellStyle = contentStyle;
+      sheet.getRangeByIndex(4, 2).cellStyle = contentStyle;
+
+      sheet.getRangeByIndex(5, 1).setText('Registration Type:');
+      sheet.getRangeByIndex(5, 2).setText(_getRegistrationTypeText(details.registrationType));
+      sheet.getRangeByIndex(5, 1).cellStyle = contentStyle;
+      sheet.getRangeByIndex(5, 2).cellStyle = contentStyle;
+
+      sheet.getRangeByIndex(6, 1).setText('Business Activities:');
+      sheet.getRangeByIndex(6, 2).setText(details.businessActivities.join(', '));
+      sheet.getRangeByIndex(6, 1).cellStyle = contentStyle;
+      sheet.getRangeByIndex(6, 2).cellStyle = contentStyle;
+
+      sheet.getRangeByIndex(7, 1).setText('License Expiry Date:');
+      sheet.getRangeByIndex(7, 2).setText('${details.licenseExpiryDate.day}/${details.licenseExpiryDate.month}/${details.licenseExpiryDate.year}');
+      sheet.getRangeByIndex(7, 1).cellStyle = contentStyle;
+      sheet.getRangeByIndex(7, 2).cellStyle = contentStyle;
+
+      // Информация о визах
+      sheet.getRangeByIndex(9, 1, 9, 2).merge();
+      sheet.getRangeByIndex(9, 1).setText('Visa Information');
+      sheet.getRangeByIndex(9, 1).cellStyle = subHeaderStyle;
+
+      sheet.getRangeByIndex(10, 1).setText('Number of Visas:');
+      sheet.getRangeByIndex(10, 2).setText(details.visaCount.toString());
+      sheet.getRangeByIndex(10, 1).cellStyle = contentStyle;
+      sheet.getRangeByIndex(10, 2).cellStyle = contentStyle;
+
+      // Информация о владельцах
+      sheet.getRangeByIndex(12, 1, 12, 2).merge();
+      sheet.getRangeByIndex(12, 1).setText('Shareholders');
+      sheet.getRangeByIndex(12, 1).cellStyle = subHeaderStyle;
+
+      int row = 13;
+      for (var shareholder in details.shareholders) {
+        sheet.getRangeByIndex(row, 1).setText('Name:');
+        sheet.getRangeByIndex(row, 2).setText(shareholder.name);
+        sheet.getRangeByIndex(row, 1).cellStyle = contentStyle;
+        sheet.getRangeByIndex(row, 2).cellStyle = contentStyle;
+
+        row++;
+        sheet.getRangeByIndex(row, 1).setText('Shares:');
+        sheet.getRangeByIndex(row, 2).setText('${shareholder.shares} (${shareholder.percentage}%)');
+        sheet.getRangeByIndex(row, 1).cellStyle = contentStyle;
+        sheet.getRangeByIndex(row, 2).cellStyle = contentStyle;
+        row++;
+      }
+
+      // Информация о капитале
+      sheet.getRangeByIndex(row + 1, 1, row + 1, 2).merge();
+      sheet.getRangeByIndex(row + 1, 1).setText('Share Capital');
+      sheet.getRangeByIndex(row + 1, 1).cellStyle = subHeaderStyle;
+
+      row += 2;
+      sheet.getRangeByIndex(row, 1).setText('Total Share Capital:');
+      sheet.getRangeByIndex(row, 2).setText('${details.shareCapital.toStringAsFixed(2)} AED');
+      sheet.getRangeByIndex(row, 1).cellStyle = contentStyle;
+      sheet.getRangeByIndex(row, 2).cellStyle = contentStyle;
+
+      row++;
+      sheet.getRangeByIndex(row, 1).setText('Total Shares:');
+      sheet.getRangeByIndex(row, 2).setText(details.totalShares.toString());
+      sheet.getRangeByIndex(row, 1).cellStyle = contentStyle;
+      sheet.getRangeByIndex(row, 2).cellStyle = contentStyle;
+
+      // Информация о назначениях
+      row += 2;
+      sheet.getRangeByIndex(row, 1, row, 2).merge();
+      sheet.getRangeByIndex(row, 1).setText('Appointments');
+      sheet.getRangeByIndex(row, 1).cellStyle = subHeaderStyle;
+
+      row++;
+      sheet.getRangeByIndex(row, 1).setText('UBO:');
+      sheet.getRangeByIndex(row, 2).setText(details.ubo);
+      sheet.getRangeByIndex(row, 1).cellStyle = contentStyle;
+      sheet.getRangeByIndex(row, 2).cellStyle = contentStyle;
+
+      row++;
+      sheet.getRangeByIndex(row, 1).setText('General Manager:');
+      sheet.getRangeByIndex(row, 2).setText(details.generalManager);
+      sheet.getRangeByIndex(row, 1).cellStyle = contentStyle;
+      sheet.getRangeByIndex(row, 2).cellStyle = contentStyle;
+
+      row++;
+      sheet.getRangeByIndex(row, 1).setText('Director:');
+      sheet.getRangeByIndex(row, 2).setText(details.director);
+      sheet.getRangeByIndex(row, 1).cellStyle = contentStyle;
+      sheet.getRangeByIndex(row, 2).cellStyle = contentStyle;
+
+      row++;
+      sheet.getRangeByIndex(row, 1).setText('Secretary:');
+      sheet.getRangeByIndex(row, 2).setText(details.secretary);
+      sheet.getRangeByIndex(row, 1).cellStyle = contentStyle;
+      sheet.getRangeByIndex(row, 2).cellStyle = contentStyle;
+
+      // Информация о фризоне
+      row += 2;
+      sheet.getRangeByIndex(row, 1, row, 2).merge();
+      sheet.getRangeByIndex(row, 1).setText('Freezone Information');
+      sheet.getRangeByIndex(row, 1).cellStyle = subHeaderStyle;
+
+      row++;
+      sheet.getRangeByIndex(row, 1).setText('Selected Freezone:');
+      sheet.getRangeByIndex(row, 2).setText(details.freezone);
+      sheet.getRangeByIndex(row, 1).cellStyle = contentStyle;
+      sheet.getRangeByIndex(row, 2).cellStyle = contentStyle;
+
+      // Информация об оплате
+      row += 2;
+      sheet.getRangeByIndex(row, 1, row, 2).merge();
+      sheet.getRangeByIndex(row, 1).setText('Payment Information');
+      sheet.getRangeByIndex(row, 1).cellStyle = subHeaderStyle;
+
+      row++;
+      sheet.getRangeByIndex(row, 1).setText('Registration Cost:');
+      sheet.getRangeByIndex(row, 2).setText('${details.registrationCost.toStringAsFixed(2)} AED');
+      sheet.getRangeByIndex(row, 1).cellStyle = contentStyle;
+      sheet.getRangeByIndex(row, 2).cellStyle = contentStyle;
+
+      row++;
+      sheet.getRangeByIndex(row, 1).setText('Payment Status:');
+      sheet.getRangeByIndex(row, 2).setText(_getPaymentStatusText(details.paymentStatus));
+      sheet.getRangeByIndex(row, 1).cellStyle = contentStyle;
+      sheet.getRangeByIndex(row, 2).cellStyle = contentStyle;
+
+      // Автоматическая ширина колонок
+      sheet.autoFitColumn(1);
+      sheet.autoFitColumn(2);
+
+      // Сохраняем файл
+      final directory = await getApplicationDocumentsDirectory();
+      final file = File('${directory.path}/registration_application_${details.id}.xlsx');
+      final List<int> bytes = workbook.saveAsStream();
+      await file.writeAsBytes(bytes);
+
+      // Открываем файл
+      await OpenFile.open(file.path);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Application form downloaded successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error downloading application form: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,6 +216,11 @@ class RegistrationDetailsScreen extends StatelessWidget {
         elevation: 0,
         centerTitle: true,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.download),
+            tooltip: 'Download Application Form',
+            onPressed: () => _downloadApplicationForm(context),
+          ),
           IconButton(
             icon: const Icon(Icons.edit_outlined),
             onPressed: () {
@@ -42,6 +242,7 @@ class RegistrationDetailsScreen extends StatelessWidget {
           children: [
             _buildHeader(),
             const SizedBox(height: 32),
+            _buildActionButtons(context),
             _buildSection(
               'Company Information',
               [
@@ -228,6 +429,130 @@ class RegistrationDetailsScreen extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildActionButtons(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 32),
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildActionButton(
+              context: context,
+              icon: Icons.file_copy_outlined,
+              label: 'Request\nDocuments',
+              onPressed: () {
+                // TODO: Implement document request
+              },
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: _buildActionButton(
+              context: context,
+              icon: Icons.help_outline,
+              label: 'Request\nInformation',
+              onPressed: () {
+                // TODO: Implement information clarification request
+              },
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: _buildActionButton(
+              context: context,
+              icon: Icons.verified_user_outlined,
+              label: 'Request\nKYC',
+              onPressed: () {
+                // TODO: Implement KYC request
+              },
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: _buildActionButton(
+              context: context,
+              icon: Icons.draw_outlined,
+              label: 'Request\nSigning',
+              onPressed: () {
+                // TODO: Implement document signing request
+              },
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: _buildActionButton(
+              context: context,
+              icon: Icons.more_horiz,
+              label: 'Other\nRequest',
+              onPressed: () {
+                // TODO: Implement other request
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButton({
+    required BuildContext context,
+    required IconData icon,
+    required String label,
+    required VoidCallback onPressed,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: Colors.grey.withOpacity(0.2),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  icon,
+                  size: 20,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[800],
+                  height: 1.2,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -423,4 +748,4 @@ class RegistrationDetailsScreen extends StatelessWidget {
         return 'Completed';
     }
   }
-} 
+}
