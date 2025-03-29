@@ -3,6 +3,7 @@ import '../models/company_registration.dart';
 import '../models/registration_details.dart';
 import 'registration_form_screen.dart';
 import 'registration_details_screen.dart';
+import 'support_chat_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -138,6 +139,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   label: Text('Applications'),
                 ),
                 NavigationRailDestination(
+                  icon: Icon(Icons.chat_outlined),
+                  selectedIcon: Icon(Icons.chat),
+                  label: Text('Support'),
+                ),
+                NavigationRailDestination(
                   icon: Icon(Icons.analytics_outlined),
                   selectedIcon: Icon(Icons.analytics),
                   label: Text('Analytics'),
@@ -154,115 +160,123 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Expanded(
             child: Container(
               color: Theme.of(context).scaffoldBackgroundColor,
-              child: Column(
-                children: [
-                  // Top Bar with Search and Actions
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: const BorderRadius.only(
-                        bottomLeft: Radius.circular(20),
-                        bottomRight: Radius.circular(20),
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Row(
+              child: _selectedIndex == 0
+                  ? Column(
                       children: [
+                        // Top Bar with Search and Actions
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 32),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: const BorderRadius.only(
+                              bottomLeft: Radius.circular(20),
+                              bottomRight: Radius.circular(20),
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.only(top: 8),
+                                  child: TextField(
+                                    controller: _searchController,
+                                    decoration: InputDecoration(
+                                      hintText: 'Search applications...',
+                                      prefixIcon: const Icon(Icons.search, size: 18),
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      contentPadding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 8,
+                                      ),
+                                    ),
+                                    onChanged: (value) {
+                                      // TODO: Implement search
+                                    },
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Padding(
+                                padding: const EdgeInsets.only(top: 8),
+                                child: _buildFilterButton(
+                                  'Status',
+                                  _selectedStatus == null
+                                      ? null
+                                      : _getStatusText(_selectedStatus!),
+                                  () {
+                                    // Show status filter dialog
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Padding(
+                                padding: const EdgeInsets.only(top: 8),
+                                child: _buildFilterButton(
+                                  'Freezone',
+                                  _selectedFreezone,
+                                  () {
+                                    // Show freezone filter dialog
+                                  },
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Padding(
+                                padding: const EdgeInsets.only(top: 8),
+                                child: ElevatedButton.icon(
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const RegistrationFormScreen(),
+                                      ),
+                                    );
+                                  },
+                                  icon: const Icon(Icons.add, size: 18),
+                                  label: const Text('New Application'),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Applications Table
                         Expanded(
                           child: Padding(
-                            padding: const EdgeInsets.only(top: 8),
-                            child: TextField(
-                              controller: _searchController,
-                              decoration: InputDecoration(
-                                hintText: 'Search applications...',
-                                prefixIcon: const Icon(Icons.search, size: 18),
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 8,
+                            padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                            child: Card(
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(16),
+                                child: SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: ConstrainedBox(
+                                    constraints: BoxConstraints(
+                                      minWidth: MediaQuery.of(context).size.width - (_isNavigationRailExtended ? 280 : 72) - 32,
+                                    ),
+                                    child: _buildRegistrationsTable(),
+                                  ),
                                 ),
                               ),
-                              onChanged: (value) {
-                                // TODO: Implement search
-                              },
                             ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: _buildFilterButton(
-                            'Status',
-                            _selectedStatus == null
-                                ? null
-                                : _getStatusText(_selectedStatus!),
-                            () {
-                              // Show status filter dialog
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: _buildFilterButton(
-                            'Freezone',
-                            _selectedFreezone,
-                            () {
-                              // Show freezone filter dialog
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: ElevatedButton.icon(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      const RegistrationFormScreen(),
-                                ),
-                              );
-                            },
-                            icon: const Icon(Icons.add, size: 18),
-                            label: const Text('New Application'),
                           ),
                         ),
                       ],
-                    ),
-                  ),
-                  // Applications Table
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-                      child: Card(
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(16),
-                          child: SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: ConstrainedBox(
-                              constraints: BoxConstraints(
-                                minWidth: MediaQuery.of(context).size.width - (_isNavigationRailExtended ? 280 : 72) - 32,
-                              ),
-                              child: _buildRegistrationsTableWithGesture(),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                    )
+                  : _selectedIndex == 1
+                      ? const Center(child: Text('Applications Screen'))
+                      : _selectedIndex == 2
+                          ? const SupportChatScreen()
+                          : _selectedIndex == 3
+                              ? const Center(child: Text('Analytics Screen'))
+                              : const Center(child: Text('Settings Screen')),
             ),
           ),
         ],
@@ -322,90 +336,124 @@ class _DashboardScreenState extends State<DashboardScreen> {
       rows: _mockRegistrations.map((registration) {
         return DataRow(
           cells: [
-            DataCell(Text(registration.id)),
-            DataCell(Text(registration.companyName)),
-            DataCell(Text(registration.clientName)),
-            DataCell(Text(registration.email)),
-            DataCell(Text(registration.phone)),
-            DataCell(Text(registration.freezone)),
             DataCell(
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: _getStatusColor(registration.status).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  _getStatusText(registration.status),
-                  style: TextStyle(
-                    color: _getStatusColor(registration.status),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
+              GestureDetector(
+                onTap: () => _navigateToDetails(registration),
+                child: Text(registration.id),
+              ),
+            ),
+            DataCell(
+              GestureDetector(
+                onTap: () => _navigateToDetails(registration),
+                child: Text(registration.companyName),
+              ),
+            ),
+            DataCell(
+              GestureDetector(
+                onTap: () => _navigateToDetails(registration),
+                child: Text(registration.clientName),
+              ),
+            ),
+            DataCell(
+              GestureDetector(
+                onTap: () => _navigateToDetails(registration),
+                child: Text(registration.email),
+              ),
+            ),
+            DataCell(
+              GestureDetector(
+                onTap: () => _navigateToDetails(registration),
+                child: Text(registration.phone),
+              ),
+            ),
+            DataCell(
+              GestureDetector(
+                onTap: () => _navigateToDetails(registration),
+                child: Text(registration.freezone),
+              ),
+            ),
+            DataCell(
+              GestureDetector(
+                onTap: () => _navigateToDetails(registration),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: _getStatusColor(registration.status).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    _getStatusText(registration.status),
+                    style: TextStyle(
+                      color: _getStatusColor(registration.status),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
               ),
             ),
-            DataCell(Text(
-              '${registration.submissionDate.day}/${registration.submissionDate.month}/${registration.submissionDate.year}',
-            )),
-            DataCell(Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.more_horiz, size: 18),
-                  onPressed: () {
-                    // TODO: Implement actions menu
-                  },
+            DataCell(
+              GestureDetector(
+                onTap: () => _navigateToDetails(registration),
+                child: Text(
+                  '${registration.submissionDate.day}/${registration.submissionDate.month}/${registration.submissionDate.year}',
                 ),
-              ],
-            )),
+              ),
+            ),
+            DataCell(
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.more_horiz, size: 18),
+                    onPressed: () {
+                      // TODO: Implement actions menu
+                    },
+                  ),
+                ],
+              ),
+            ),
           ],
         );
       }).toList(),
     );
   }
 
-  Widget _buildRegistrationsTableWithGesture() {
-    return GestureDetector(
-      onTap: () {
-        // TODO: Replace with actual data
-        final details = RegistrationDetails(
-          id: _mockRegistrations[0].id,
-          registrationType: CompanyRegistrationType.newCompany,
-          businessActivities: ['Trading', 'Consulting', 'Technology'],
-          licenseExpiryDate: DateTime.now().add(const Duration(days: 365)),
-          companyNameOptions: [
-            'Tech Solutions Ltd',
-            'Tech Solutions FZE',
-            'Tech Solutions Group',
-          ],
-          visaCount: 2,
-          shareholders: [
-            Shareholder(
-              name: 'John Smith',
-              isCompany: false,
-              shares: 1000,
-              percentage: 100,
-            ),
-          ],
-          shareCapital: 100000,
-          totalShares: 1000,
-          ubo: 'John Smith',
-          generalManager: 'John Smith',
-          director: 'John Smith',
-          secretary: 'Jane Doe',
-          freezone: _mockRegistrations[0].freezone,
-          registrationCost: 15000,
-          paymentStatus: PaymentStatus.pending,
-        );
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => RegistrationDetailsScreen(details: details),
-          ),
-        );
-      },
-      child: _buildRegistrationsTable(),
+  void _navigateToDetails(CompanyRegistration registration) {
+    final details = RegistrationDetails(
+      id: registration.id,
+      registrationType: CompanyRegistrationType.newCompany,
+      businessActivities: ['Trading', 'Consulting', 'Technology'],
+      licenseExpiryDate: DateTime.now().add(const Duration(days: 365)),
+      companyNameOptions: [
+        registration.companyName,
+        '${registration.companyName} FZE',
+        '${registration.companyName} Group',
+      ],
+      visaCount: 2,
+      shareholders: [
+        Shareholder(
+          name: registration.clientName,
+          isCompany: false,
+          shares: 1000,
+          percentage: 100,
+        ),
+      ],
+      shareCapital: 100000,
+      totalShares: 1000,
+      ubo: registration.clientName,
+      generalManager: registration.clientName,
+      director: registration.clientName,
+      secretary: 'Jane Doe',
+      freezone: registration.freezone,
+      registrationCost: 15000,
+      paymentStatus: PaymentStatus.pending,
+    );
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => RegistrationDetailsScreen(details: details),
+      ),
     );
   }
 
